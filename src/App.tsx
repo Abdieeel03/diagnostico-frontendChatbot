@@ -36,8 +36,8 @@ interface MessagesMap {
 }
 
 const App = () => {
-  // Configurable typing speed: milliseconds per character. 0 means instant.
-  const [typingSpeedMs, setTypingSpeedMs] = useState<number>(15);
+  // Typing speed: milliseconds per character. 15ms is Normal speed.
+  const typingSpeedMs = 15;
 
 
 
@@ -385,25 +385,7 @@ const App = () => {
             </div>
           </div>
 
-          <div className="header-controls">
-            {/* Speed configuration */}
-            <div className="speed-selector">
-              <label htmlFor="speed-select" className="control-label">Velocidad:</label>
-              <select
-                id="speed-select"
-                value={typingSpeedMs}
-                onChange={(e) => setTypingSpeedMs(Number(e.target.value))}
-                className="select-control"
-              >
-                <option value={30}>Lenta</option>
-                <option value={15}>Normal</option>
-                <option value={5}>Rápida</option>
-                <option value={0}>Instante (Sin efecto)</option>
-              </select>
-            </div>
 
-
-          </div>
         </header>
 
         {/* Chat Messages list */}
