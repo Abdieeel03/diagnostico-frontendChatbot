@@ -266,71 +266,7 @@
   border-color: var(--medical-primary);
 }
 
-.connection-mode-selector {
-  display: flex;
-  background-color: #f1f5f9;
-  padding: 3px;
-  border-radius: 8px;
-}
 
-.mode-btn {
-  padding: 5px 12px;
-  font-size: 11px;
-  font-weight: 600;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--text-muted);
-  transition: all 0.2s ease;
-}
-
-.mode-btn.active {
-  background-color: #ffffff;
-  color: var(--medical-primary-hover);
-  box-shadow: var(--shadow-sm);
-}
-
-.status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-main);
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.status-dot.demo-mode {
-  background-color: var(--medical-warning);
-  box-shadow: 0 0 8px var(--medical-warning);
-}
-
-.status-dot.api-mode {
-  background-color: var(--medical-primary);
-  box-shadow: 0 0 8px var(--medical-primary);
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(20, 184, 166, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0);
-  }
-}
 
 /* Chat Messages Area */
 .chat-messages {
@@ -641,46 +577,7 @@
   40% { transform: scale(1); }
 }
 
-/* Connection Fallback alert */
-.fallback-alert {
-  padding: 0 4px;
-  animation: fadeIn 0.3s ease-in;
-}
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.alert-content {
-  background-color: var(--medical-error-light);
-  border: 1px solid var(--medical-error-border);
-  padding: 12px 16px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 13.5px;
-  color: #7f1d1d;
-}
-
-.alert-action-btn {
-  background-color: var(--medical-error);
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background-color 0.2s;
-}
-
-.alert-action-btn:hover {
-  background-color: #dc2626;
-}
 
 /* Suggestion Buttons */
 .suggestions-container {

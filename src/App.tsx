@@ -39,9 +39,7 @@ const App = () => {
   // Configurable typing speed: milliseconds per character. 0 means instant.
   const [typingSpeedMs, setTypingSpeedMs] = useState<number>(15);
 
-  // Connection mode: 'api' (fetches from Scala via proxy) or 'demo' (simulated local responses)
-  const [connectionMode, setConnectionMode] = useState<"api" | "demo">("demo");
-  const [apiErrorOccurred, setApiErrorOccurred] = useState(false);
+
 
   // Mobile sidebar visibility
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -272,36 +270,27 @@ const App = () => {
 
     setInputValue("");
     setIsGenerating(true);
-    setApiErrorOccurred(false);
 
     try {
-      let finalData: DiagnosticData;
+      // Querying the real Scala backend (proxied via Vite configuration)
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: userText }),
+      });
 
-      if (connectionMode === "api") {
-        // Querying the real Scala backend (proxied via Vite configuration)
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ message: userText }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Error del servidor: ${response.statusText}`);
-        }
-
-        const json = await response.json();
-        if (!json.success || !json.data) {
-          throw new Error(json.message || "La API de Scala reportó un error");
-        }
-
-        finalData = json.data;
-      } else {
-        // Local simulation / Demo Mode
-        await new Promise((resolve) => setTimeout(resolve, 800)); // Simulate networking lag
-        finalData = getDemoResponse(userText);
+      if (!response.ok) {
+        throw new Error(`Error del servidor: ${response.statusText}`);
       }
+
+      const json = await response.json();
+      if (!json.success || !json.data) {
+        throw new Error(json.message || "La API de Scala reportó un error");
+      }
+
+      const finalData: DiagnosticData = json.data;
 
       // 3. Trigger typing effect with the received response
       setMessagesBySession((prev) => {
@@ -326,9 +315,8 @@ const App = () => {
 
     } catch (error) {
       console.error("Error al obtener diagnóstico:", error);
-      setApiErrorOccurred(true);
       
-      const errorMsg = "Lo siento, no logré conectarme con la API de diagnóstico de Scala. Por favor asegúrate de que el servidor esté activo en el puerto 9000 o activa el **Modo Demo** en la parte superior para probar el flujo completo.";
+      const errorMsg = "Lo siento, no logré conectarme con la API de diagnóstico de Scala. Por favor asegúrate de que el servidor esté activo en el puerto 9000.";
       
       setMessagesBySession((prev) => {
         const sessionMsgs = prev[activeSessionId] || [];
@@ -356,59 +344,7 @@ const App = () => {
     handleSendMessage(inputValue);
   };
 
-  // Local rule-based simulated generator matching the exact JSON formats of Scala API
-  const getDemoResponse = (input: string): DiagnosticData => {
-    const normalized = input.toLowerCase();
-    
-    // Identify symptoms in query
-    const detected: string[] = [];
-    if (normalized.includes("fiebre")) detected.push("fiebre");
-    if (normalized.includes("tos")) detected.push("tos");
-    if (normalized.includes("garganta")) detected.push("garganta");
-    if (normalized.includes("cabeza") || normalized.includes("cefalea")) detected.push("cefalea");
-    if (normalized.includes("fatiga") || normalized.includes("cansancio")) detected.push("fatiga");
-    if (normalized.includes("estomago") || normalized.includes("panza") || normalized.includes("nausea")) detected.push("dolor_estomago");
 
-    // Fallback default symptoms if none identified
-    if (detected.length === 0) {
-      detected.push("sintomas_generales");
-    }
-
-    // Build diagnostics list depending on symptoms
-    const diagnosticsList: Diagnostic[] = [];
-
-    if (detected.includes("fiebre") || detected.includes("tos") || detected.includes("garganta")) {
-      diagnosticsList.push({ enfermedad: "gripe", score: 0.75, coincidencias: detected.length });
-      diagnosticsList.push({ enfermedad: "covid-19", score: 0.65, coincidencias: detected.length });
-    }
-    
-    if (detected.includes("cefalea") || detected.includes("fatiga")) {
-      diagnosticsList.push({ enfermedad: "estres_clinico", score: 0.55, coincidencias: detected.length });
-      diagnosticsList.push({ enfermedad: "migrana", score: 0.50, coincidencias: 1 });
-    }
-
-    if (detected.includes("dolor_estomago")) {
-      diagnosticsList.push({ enfermedad: "gastroenteritis", score: 0.70, coincidencias: detected.length });
-      diagnosticsList.push({ enfermedad: "indigestión", score: 0.60, coincidencias: 1 });
-    }
-
-    // Always put a random minor match to keep list realistic
-    diagnosticsList.push({ enfermedad: "resfriado_comun", score: 0.35, coincidencias: 1 });
-    diagnosticsList.push({ enfermedad: "alergia_estacional", score: 0.25, coincidencias: 1 });
-
-    // Sort by score desc
-    diagnosticsList.sort((a, b) => b.score - a.score);
-
-    const symptomText = detected.map(s => `**${s}**`).join(", ");
-    
-    const responseText = `Analicé detalladamente tu descripción. He detectado los siguientes síntomas en tu consulta: ${symptomText}.\n\nBasándome en nuestro algoritmo de reglas de diagnóstico clínico, tu sintomatología tiene mayores coincidencias con un cuadro de **${diagnosticsList[0].enfermedad.toUpperCase().replace("_", " ")}** (con un score del ${Math.round(diagnosticsList[0].score * 100)}%).\n\n*   **Recomendación:** Mantén reposo y buena hidratación.\n*   **Nota:** Abajo puedes ver el desglose clínico con las barras de score de todas las posibles enfermedades analizadas para este reporte.`;
-
-    return {
-      response: responseText,
-      symptoms: detected,
-      diagnosticos: diagnosticsList,
-    };
-  };
 
   // Realistic medical quick suggestions
   const suggestions = [
@@ -466,28 +402,7 @@ const App = () => {
               </select>
             </div>
 
-            {/* Connection mode toggle */}
-            <div className="connection-mode-selector">
-              <button
-                className={`mode-btn ${connectionMode === "api" ? "active" : ""}`}
-                onClick={() => setConnectionMode("api")}
-                title="Conectar a API Scala local (localhost:9000)"
-              >
-                Servidor API
-              </button>
-              <button
-                className={`mode-btn ${connectionMode === "demo" ? "active" : ""}`}
-                onClick={() => setConnectionMode("demo")}
-                title="Usar respuestas simuladas locales"
-              >
-                Modo Demo
-              </button>
-            </div>
 
-            <div className="status-indicator">
-              <span className={`status-dot ${connectionMode === "demo" ? "demo-mode" : "api-mode"}`} />
-              <span>{connectionMode === "demo" ? "Demo" : "Scala API"}</span>
-            </div>
           </div>
         </header>
 
@@ -550,35 +465,7 @@ const App = () => {
             </div>
           )}
 
-          {/* Fallback alert if API failed */}
-          {apiErrorOccurred && (
-            <div className="fallback-alert">
-              <div className="alert-content">
-                <span>⚠️ No se detecta la API en puerto 9000. ¿Quieres activar el <strong>Modo Demo</strong> para ver cómo funciona la interfaz?</span>
-                <button
-                  className="alert-action-btn"
-                  onClick={() => {
-                    setConnectionMode("demo");
-                    setApiErrorOccurred(false);
-                    // Remove last error message and retry with demo
-                    setMessagesBySession((prev) => {
-                      const list = prev[activeSessionId] || [];
-                      if (list.length > 0) {
-                        return {
-                          ...prev,
-                          [activeSessionId]: list.slice(0, -2), // Remove user input and assistant error placeholder
-                        };
-                      }
-                      return prev;
-                    });
-                    setIsGenerating(false);
-                  }}
-                >
-                  Activar Modo Demo
-                </button>
-              </div>
-            </div>
-          )}
+
 
           <div ref={messagesEndRef} />
         </div>
