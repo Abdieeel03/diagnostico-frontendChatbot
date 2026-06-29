@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Sidebar, type ChatSession } from "./components/Sidebar";
@@ -39,8 +39,6 @@ const App = () => {
   // Typing speed: milliseconds per character. 15ms is Normal speed.
   const typingSpeedMs = 15;
 
-
-
   // Mobile sidebar visibility
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -49,11 +47,15 @@ const App = () => {
     {
       id: "welcome-session",
       title: "Consulta Médica Inicial",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     },
   ]);
 
-  const [activeSessionId, setActiveSessionId] = useState<string>("welcome-session");
+  const [activeSessionId, setActiveSessionId] =
+    useState<string>("welcome-session");
 
   const [messagesBySession, setMessagesBySession] = useState<MessagesMap>({
     "welcome-session": [
@@ -61,7 +63,8 @@ const App = () => {
         id: "welcome-msg",
         sender: "assistant",
         text: "### ¡Bienvenido al Asistente de Diagnóstico Médico! 🩺\n\nPor favor, describe los síntomas que experimentas de forma detallada (por ejemplo: *'Tengo fiebre y tos desde ayer'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
-        displayedText: "### ¡Bienvenido al Asistente de Diagnóstico Médico! 🩺\n\nPor favor, describe los síntomas que experimentas de forma detallada (por ejemplo: *'Tengo fiebre y tos desde ayer'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
+        displayedText:
+          "### ¡Bienvenido al Asistente de Diagnóstico Médico! 🩺\n\nPor favor, describe los síntomas que experimentas de forma detallada (por ejemplo: *'Tengo fiebre y tos desde ayer'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
         isFinished: true,
       },
     ],
@@ -92,7 +95,7 @@ const App = () => {
     fullText: string,
     messageId: string,
     speed: number,
-    onComplete: () => void
+    onComplete: () => void,
   ) => {
     if (currentIntervalRef.current) {
       clearInterval(currentIntervalRef.current);
@@ -107,7 +110,7 @@ const App = () => {
           [activeSessionId]: sessionMsgs.map((msg) =>
             msg.id === messageId
               ? { ...msg, displayedText: fullText, isFinished: true }
-              : msg
+              : msg,
           ),
         };
       });
@@ -127,7 +130,7 @@ const App = () => {
             [activeSessionId]: sessionMsgs.map((msg) =>
               msg.id === messageId
                 ? { ...msg, displayedText: fullText, isFinished: true }
-                : msg
+                : msg,
             ),
           };
         });
@@ -139,7 +142,7 @@ const App = () => {
           return {
             ...prev,
             [activeSessionId]: sessionMsgs.map((msg) =>
-              msg.id === messageId ? { ...msg, displayedText: chunk } : msg
+              msg.id === messageId ? { ...msg, displayedText: chunk } : msg,
             ),
           };
         });
@@ -155,7 +158,10 @@ const App = () => {
     const newSession: ChatSession = {
       id: newId,
       title: "Nueva Consulta Médica",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     };
 
     setSessions((prev) => [newSession, ...prev]);
@@ -167,7 +173,8 @@ const App = () => {
           id: `welcome-${newId}`,
           sender: "assistant",
           text: "### Nueva Consulta Abierta 🩺\n\nDescribe tus síntomas con detalle. Indícame qué sientes y te brindaré una simulación de pre-diagnóstico.",
-          displayedText: "### Nueva Consulta Abierta 🩺\n\nDescribe tus síntomas con detalle. Indícame qué sientes y te brindaré una simulación de pre-diagnóstico.",
+          displayedText:
+            "### Nueva Consulta Abierta 🩺\n\nDescribe tus síntomas con detalle. Indícame qué sientes y te brindaré una simulación de pre-diagnóstico.",
           isFinished: true,
         },
       ],
@@ -203,7 +210,10 @@ const App = () => {
           {
             id: newId,
             title: "Consulta Médica Inicial",
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            timestamp: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
           },
         ]);
         setActiveSessionId(newId);
@@ -213,7 +223,8 @@ const App = () => {
               id: "welcome-msg",
               sender: "assistant",
               text: "### ¡Bienvenido al Asistente de Diagnóstico Médico! 🩺\n\nPor favor, describe los síntomas que experimentas de forma detallada (por ejemplo: *'Tengo fiebre y tos desde ayer'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
-              displayedText: "### ¡Bienvenido al Asistente de Diagnóstico Médico! 🩺\n\nPor favor, describe los síntomas que experimentas de forma detallada (por ejemplo: *'Tengo fiebre y tos desde ayer'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
+              displayedText:
+                "### ¡Bienvenido al Asistente de Diagnóstico Médico! 🩺\n\nPor favor, describe los síntomas que experimentas de forma detallada (por ejemplo: *'Tengo fiebre y tos desde ayer'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
               isFinished: true,
             },
           ],
@@ -234,9 +245,15 @@ const App = () => {
       setSessions((prev) =>
         prev.map((s) =>
           s.id === activeSessionId
-            ? { ...s, title: userText.length > 25 ? `${userText.slice(0, 22)}...` : userText }
-            : s
-        )
+            ? {
+                ...s,
+                title:
+                  userText.length > 25
+                    ? `${userText.slice(0, 22)}...`
+                    : userText,
+              }
+            : s,
+        ),
       );
     }
 
@@ -264,7 +281,11 @@ const App = () => {
       const currentMsgs = prev[activeSessionId] || [];
       return {
         ...prev,
-        [activeSessionId]: [...currentMsgs, newUserMessage, newAssistantMessage],
+        [activeSessionId]: [
+          ...currentMsgs,
+          newUserMessage,
+          newAssistantMessage,
+        ],
       };
     });
 
@@ -304,20 +325,25 @@ const App = () => {
                   text: finalData.response,
                   diagnosticData: finalData,
                 }
-              : msg
+              : msg,
           ),
         };
       });
 
-      triggerTypingEffect(finalData.response, assistantMessageId, typingSpeedMs, () => {
-        setIsGenerating(false);
-      });
-
+      triggerTypingEffect(
+        finalData.response,
+        assistantMessageId,
+        typingSpeedMs,
+        () => {
+          setIsGenerating(false);
+        },
+      );
     } catch (error) {
       console.error("Error al obtener diagnóstico:", error);
-      
-      const errorMsg = "Lo siento, no logré conectarme con la API de diagnóstico de Scala. Por favor asegúrate de que el servidor esté activo en el puerto 9000.";
-      
+
+      const errorMsg =
+        "Lo siento, no logré conectarme con la API de diagnóstico de Scala. Por favor asegúrate de que el servidor esté activo en el puerto 9000.";
+
       setMessagesBySession((prev) => {
         const sessionMsgs = prev[activeSessionId] || [];
         return {
@@ -331,7 +357,7 @@ const App = () => {
                   isFinished: true,
                   isError: true,
                 }
-              : msg
+              : msg,
           ),
         };
       });
@@ -343,8 +369,6 @@ const App = () => {
     e.preventDefault();
     handleSendMessage(inputValue);
   };
-
-
 
   // Realistic medical quick suggestions
   const suggestions = [
@@ -377,15 +401,16 @@ const App = () => {
               title="Abrir historial"
             >
               <svg viewBox="0 0 24 24" width="24" height="24">
-                <path fill="currentColor" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+                <path
+                  fill="currentColor"
+                  d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"
+                />
               </svg>
             </button>
             <div className="chat-header-title">
               <h2>Asistente Diagnóstico</h2>
             </div>
           </div>
-
-
         </header>
 
         {/* Chat Messages list */}
@@ -393,24 +418,34 @@ const App = () => {
           {activeMessages.map((message) => {
             // Ocultar globo vacío del asistente mientras se carga la respuesta
             // (el indicador de carga ya está visible en ese momento)
-            if (message.sender === "assistant" && !message.displayedText && !message.isFinished) {
+            if (
+              message.sender === "assistant" &&
+              !message.displayedText &&
+              !message.isFinished
+            ) {
               return null;
             }
             return (
               <div key={message.id} className={`message-row ${message.sender}`}>
                 <div className="message-wrapper">
                   <span className="message-sender-name">
-                    {message.sender === "user" ? "Paciente" : "Asistente Médico"}
+                    {message.sender === "user"
+                      ? "Paciente"
+                      : "Asistente Médico"}
                   </span>
-                  
-                  <div className={`message-bubble ${message.isError ? "error-bubble" : ""}`}>
+
+                  <div
+                    className={`message-bubble ${message.isError ? "error-bubble" : ""}`}
+                  >
                     {message.sender === "assistant" ? (
                       <div className="assistant-content">
                         <div className="markdown-content">
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
                             {message.displayedText || ""}
                           </ReactMarkdown>
-                          {!message.isFinished && <span className="llm-cursor" />}
+                          {!message.isFinished && (
+                            <span className="llm-cursor" />
+                          )}
                         </div>
 
                         {/* Diagnostic Panel displayed at the bottom once text is finished */}
@@ -431,23 +466,25 @@ const App = () => {
           })}
 
           {/* Loading Indicator */}
-          {isGenerating && activeMessages.length > 0 && activeMessages[activeMessages.length - 1].text === "" && (
-            <div className="message-row assistant">
-              <div className="message-wrapper">
-                <span className="message-sender-name">Asistente Médico</span>
-                <div className="message-bubble loading-bubble">
-                  <div className="typing-indicator">
-                    <span className="typing-dot" />
-                    <span className="typing-dot" />
-                    <span className="typing-dot" />
+          {isGenerating &&
+            activeMessages.length > 0 &&
+            activeMessages[activeMessages.length - 1].text === "" && (
+              <div className="message-row assistant">
+                <div className="message-wrapper">
+                  <span className="message-sender-name">Asistente Médico</span>
+                  <div className="message-bubble loading-bubble">
+                    <div className="typing-indicator">
+                      <span className="typing-dot" />
+                      <span className="typing-dot" />
+                      <span className="typing-dot" />
+                    </div>
+                    <span className="loading-text">
+                      Analizando síntomas con la API...
+                    </span>
                   </div>
-                  <span className="loading-text">Analizando síntomas con la API...</span>
                 </div>
               </div>
-            </div>
-          )}
-
-
+            )}
 
           <div ref={messagesEndRef} />
         </div>
@@ -455,7 +492,9 @@ const App = () => {
         {/* Suggestion Prompts */}
         {activeMessages.length <= 1 && (
           <div className="suggestions-container">
-            <span className="suggestions-title">Sugerencias de inicio rápido:</span>
+            <span className="suggestions-title">
+              Sugerencias de inicio rápido:
+            </span>
             <div className="suggestions-buttons">
               {suggestions.map((suggestion, index) => (
                 <button
@@ -488,7 +527,10 @@ const App = () => {
             title="Enviar mensaje"
           >
             <svg viewBox="0 0 24 24" width="20" height="20">
-              <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+              <path
+                fill="currentColor"
+                d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"
+              />
             </svg>
           </button>
         </form>
