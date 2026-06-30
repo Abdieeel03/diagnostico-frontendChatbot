@@ -1,161 +1,49 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Sidebar, type ChatSession } from "./components/Sidebar";
+import { Sidebar } from "./components/Sidebar";
 import { DiagnosticPanel } from "./components/DiagnosticPanel";
+import { useChatPersistence } from "./hooks/useChatPersistence";
+import { useTypingEffect } from "./hooks/useTypingEffect";
+import type { DiagnosticData, Message } from "./types/chat";
 import "./App.css";
 
-// Interface for diagnostic detail from API
-interface Diagnostic {
-  coincidencias: number;
-  enfermedad: string;
-  score: number;
-}
-
-// Interface representing the API data block
-interface DiagnosticData {
-  response: string;
-  symptoms: string[];
-  diagnosticos: Diagnostic[];
-}
-
-// Main message representation
-interface Message {
-  id: string;
-  sender: "user" | "assistant";
-  text: string; // The full text or the styled output
-  displayedText?: string; // Used for the character-by-character typing effect
-  diagnosticData?: DiagnosticData; // Collapsible analysis
-  isFinished: boolean;
-  isError?: boolean;
-}
-
-// Map storing messages for each chat session
-interface MessagesMap {
-  [sessionId: string]: Message[];
-}
+const typingSpeedMs = 15;
 
 const App = () => {
-  // Typing speed: milliseconds per character. 15ms is Normal speed.
-  const typingSpeedMs = 15;
-
-  // Mobile sidebar visibility
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-
-  // Chat sessions state
-  const [sessions, setSessions] = useState<ChatSession[]>([
-    {
-      id: "welcome-session",
-      title: "Consulta Médica Inicial",
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    },
-  ]);
-
-  const [activeSessionId, setActiveSessionId] =
-    useState<string>("welcome-session");
-
-  const [messagesBySession, setMessagesBySession] = useState<MessagesMap>({
-    "welcome-session": [
-      {
-        id: "welcome-msg",
-        sender: "assistant",
-        text: "### ¡Bienvenido al Asistente de Diagnóstico Médico! 🩺\n\nPor favor, describe los síntomas que experimentas de forma detallada (por ejemplo: *'Tengo fiebre y tos desde ayer'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
-        displayedText:
-          "### ¡Bienvenido al Asistente de Diagnóstico Médico! 🩺\n\nPor favor, describe los síntomas que experimentas de forma detallada (por ejemplo: *'Tengo fiebre y tos desde ayer'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
-        isFinished: true,
-      },
-    ],
-  });
-
   const [inputValue, setInputValue] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const currentIntervalRef = useRef<any>(null);
 
-  // Auto-scroll to bottom of messages
+  const {
+    sessions,
+    setSessions,
+    activeSessionId,
+    setActiveSessionId,
+    messagesBySession,
+    setMessagesBySession,
+    WELCOME_MESSAGE,
+  } = useChatPersistence();
+
+  const { triggerTypingEffect, cancelTyping } = useTypingEffect(
+    setMessagesBySession,
+    { speedMs: typingSpeedMs }
+  );
+
+  const activeMessages = useMemo(
+    () => messagesBySession[activeSessionId] || [],
+    [messagesBySession, activeSessionId]
+  );
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messagesBySession, activeSessionId, isGenerating]);
 
-  // Clean up typing effect interval on unmount
-  useEffect(() => {
-    return () => {
-      if (currentIntervalRef.current) clearInterval(currentIntervalRef.current);
-    };
-  }, []);
-
-  const activeMessages = messagesBySession[activeSessionId] || [];
-
-  // Starts typing effect for assistant response
-  const triggerTypingEffect = (
-    fullText: string,
-    messageId: string,
-    speed: number,
-    onComplete: () => void,
-  ) => {
-    if (currentIntervalRef.current) {
-      clearInterval(currentIntervalRef.current);
-    }
-
-    if (speed === 0) {
-      // Instant display
-      setMessagesBySession((prev) => {
-        const sessionMsgs = prev[activeSessionId] || [];
-        return {
-          ...prev,
-          [activeSessionId]: sessionMsgs.map((msg) =>
-            msg.id === messageId
-              ? { ...msg, displayedText: fullText, isFinished: true }
-              : msg,
-          ),
-        };
-      });
-      onComplete();
-      return;
-    }
-
-    let index = 0;
-    const interval = setInterval(() => {
-      index += 2; // Type 2 characters at a time for smoother/faster flow at low speeds
-      if (index >= fullText.length) {
-        clearInterval(interval);
-        setMessagesBySession((prev) => {
-          const sessionMsgs = prev[activeSessionId] || [];
-          return {
-            ...prev,
-            [activeSessionId]: sessionMsgs.map((msg) =>
-              msg.id === messageId
-                ? { ...msg, displayedText: fullText, isFinished: true }
-                : msg,
-            ),
-          };
-        });
-        onComplete();
-      } else {
-        const chunk = fullText.slice(0, index);
-        setMessagesBySession((prev) => {
-          const sessionMsgs = prev[activeSessionId] || [];
-          return {
-            ...prev,
-            [activeSessionId]: sessionMsgs.map((msg) =>
-              msg.id === messageId ? { ...msg, displayedText: chunk } : msg,
-            ),
-          };
-        });
-      }
-    }, speed);
-
-    currentIntervalRef.current = interval;
-  };
-
-  // Create a new session
-  const handleNewChat = () => {
-    const newId = `session-${Date.now()}`;
-    const newSession: ChatSession = {
+  const handleNewChat = useCallback(() => {
+    const newId = `session-${crypto.randomUUID()}`;
+    const newSession = {
       id: newId,
       title: "Nueva Consulta Médica",
       timestamp: new Date().toLocaleTimeString([], {
@@ -172,205 +60,209 @@ const App = () => {
         {
           id: `welcome-${newId}`,
           sender: "assistant",
-          text: "### Nueva Consulta Abierta 🩺\n\nDescribe tus síntomas con detalle. Indícame qué sientes y te brindaré una simulación de pre-diagnóstico.",
+          text: "### Nueva Consulta Abierta 🩺\n\nDescribe tus sintomas con detalle. Indicame que sientes y te brindare una simulacion de pre-diagnostico.",
           displayedText:
-            "### Nueva Consulta Abierta 🩺\n\nDescribe tus síntomas con detalle. Indícame qué sientes y te brindaré una simulación de pre-diagnóstico.",
+            "### Nueva Consulta Abierta 🩺\n\nDescribe tus sintomas con detalle. Indicame que sientes y te brindare una simulacion de pre-diagnostico.",
           isFinished: true,
         },
       ],
     }));
-  };
+  }, [setSessions, setActiveSessionId, setMessagesBySession]);
 
-  // Select a session
-  const handleSelectSession = (id: string) => {
-    // If a typing simulation is running, clear it to avoid printing in the wrong tab
-    if (currentIntervalRef.current) {
-      clearInterval(currentIntervalRef.current);
-    }
-    setActiveSessionId(id);
-  };
+  const handleSelectSession = useCallback(
+    (id: string) => {
+      cancelTyping();
+      setActiveSessionId(id);
+    },
+    [cancelTyping, setActiveSessionId]
+  );
 
-  // Delete a session
-  const handleDeleteSession = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const updatedSessions = sessions.filter((s) => s.id !== id);
-    setSessions(updatedSessions);
+  const handleDeleteSession = useCallback(
+    (id: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      const updatedSessions = sessions.filter((s) => s.id !== id);
+      setSessions(() => updatedSessions);
 
-    const updatedMessages = { ...messagesBySession };
-    delete updatedMessages[id];
-    setMessagesBySession(updatedMessages);
+      const updatedMessages = { ...messagesBySession };
+      delete updatedMessages[id];
+      setMessagesBySession(() => updatedMessages);
 
-    if (activeSessionId === id) {
-      if (updatedSessions.length > 0) {
-        setActiveSessionId(updatedSessions[0].id);
-      } else {
-        // Create a new session if history becomes empty
-        const newId = "welcome-session";
-        setSessions([
-          {
-            id: newId,
-            title: "Consulta Médica Inicial",
-            timestamp: new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-          },
-        ]);
-        setActiveSessionId(newId);
-        setMessagesBySession({
-          [newId]: [
+      if (activeSessionId === id) {
+        if (updatedSessions.length > 0) {
+          setActiveSessionId(updatedSessions[0].id);
+        } else {
+          const newId = "welcome-session";
+          setSessions(() => [
             {
-              id: "welcome-msg",
-              sender: "assistant",
-              text: "### ¡Bienvenido al Asistente de Diagnóstico Médico! 🩺\n\nPor favor, describe los síntomas que experimentas de forma detallada (por ejemplo: *'Tengo fiebre y tos desde ayer'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
-              displayedText:
-                "### ¡Bienvenido al Asistente de Diagnóstico Médico! 🩺\n\nPor favor, describe los síntomas que experimentas de forma detallada (por ejemplo: *'Tengo fiebre y tos desde ayer'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
-              isFinished: true,
+              id: newId,
+              title: "Consulta Médica Inicial",
+              timestamp: new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
             },
-          ],
-        });
+          ]);
+          setActiveSessionId(newId);
+          setMessagesBySession(() => ({
+            [newId]: [WELCOME_MESSAGE],
+          }));
+        }
       }
-    }
-  };
+    },
+    [
+      sessions,
+      messagesBySession,
+      activeSessionId,
+      setSessions,
+      setMessagesBySession,
+      setActiveSessionId,
+      WELCOME_MESSAGE,
+    ]
+  );
 
-  // Core handler to send query to Scala backend or local Mock engine
-  const handleSendMessage = async (textToSend: string) => {
-    if (!textToSend.trim() || isGenerating) return;
+  const handleSendMessage = useCallback(
+    async (textToSend: string) => {
+      if (!textToSend.trim() || isGenerating) return;
 
-    const userText = textToSend.trim();
-    const isFirstUserMessage = activeMessages.length <= 1;
+      const userText = textToSend.trim();
+      const isFirstUserMessage = activeMessages.length <= 1;
 
-    // Update session title dynamically if this is the first message in a default named session
-    if (isFirstUserMessage) {
-      setSessions((prev) =>
-        prev.map((s) =>
-          s.id === activeSessionId
-            ? {
-                ...s,
-                title:
-                  userText.length > 25
-                    ? `${userText.slice(0, 22)}...`
-                    : userText,
-              }
-            : s,
-        ),
-      );
-    }
+      if (isFirstUserMessage) {
+        setSessions((prev) =>
+          prev.map((s) =>
+            s.id === activeSessionId
+              ? {
+                  ...s,
+                  title:
+                    userText.length > 25
+                      ? `${userText.slice(0, 22)}...`
+                      : userText,
+                }
+              : s
+          )
+        );
+      }
 
-    // 1. Add User Message
-    const userMessageId = `user-${Date.now()}`;
-    const newUserMessage: Message = {
-      id: userMessageId,
-      sender: "user",
-      text: userText,
-      displayedText: userText,
-      isFinished: true,
-    };
-
-    // 2. Add assistant loading placeholder
-    const assistantMessageId = `assistant-${Date.now()}`;
-    const newAssistantMessage: Message = {
-      id: assistantMessageId,
-      sender: "assistant",
-      text: "",
-      displayedText: "",
-      isFinished: false,
-    };
-
-    setMessagesBySession((prev) => {
-      const currentMsgs = prev[activeSessionId] || [];
-      return {
-        ...prev,
-        [activeSessionId]: [
-          ...currentMsgs,
-          newUserMessage,
-          newAssistantMessage,
-        ],
+      const userMessageId = `user-${crypto.randomUUID()}`;
+      const newUserMessage: Message = {
+        id: userMessageId,
+        sender: "user",
+        text: userText,
+        displayedText: userText,
+        isFinished: true,
       };
-    });
 
-    setInputValue("");
-    setIsGenerating(true);
+      const assistantMessageId = `assistant-${crypto.randomUUID()}`;
+      const newAssistantMessage: Message = {
+        id: assistantMessageId,
+        sender: "assistant",
+        text: "",
+        displayedText: "",
+        isFinished: false,
+      };
 
-    try {
-      // Querying the real Scala backend (proxied via Vite configuration)
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: userText }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error del servidor: ${response.statusText}`);
-      }
-
-      const json = await response.json();
-      if (!json.success || !json.data) {
-        throw new Error(json.message || "La API de Scala reportó un error");
-      }
-
-      const finalData: DiagnosticData = json.data;
-
-      // 3. Trigger typing effect with the received response
       setMessagesBySession((prev) => {
-        const sessionMsgs = prev[activeSessionId] || [];
+        const currentMsgs = prev[activeSessionId] || [];
         return {
           ...prev,
-          [activeSessionId]: sessionMsgs.map((msg) =>
-            msg.id === assistantMessageId
-              ? {
-                  ...msg,
-                  text: finalData.response,
-                  diagnosticData: finalData,
-                }
-              : msg,
-          ),
+          [activeSessionId]: [
+            ...currentMsgs,
+            newUserMessage,
+            newAssistantMessage,
+          ],
         };
       });
 
-      triggerTypingEffect(
-        finalData.response,
-        assistantMessageId,
-        typingSpeedMs,
-        () => {
-          setIsGenerating(false);
-        },
-      );
-    } catch (error) {
-      console.error("Error al obtener diagnóstico:", error);
+      setInputValue("");
+      setIsGenerating(true);
 
-      const errorMsg =
-        "Lo siento, no logré conectarme con la API de diagnóstico de Scala. Por favor asegúrate de que el servidor esté activo en el puerto 9000.";
+      const currentSessionId = activeSessionId;
 
-      setMessagesBySession((prev) => {
-        const sessionMsgs = prev[activeSessionId] || [];
-        return {
-          ...prev,
-          [activeSessionId]: sessionMsgs.map((msg) =>
-            msg.id === assistantMessageId
-              ? {
-                  ...msg,
-                  text: errorMsg,
-                  displayedText: errorMsg,
-                  isFinished: true,
-                  isError: true,
-                }
-              : msg,
-          ),
-        };
-      });
-      setIsGenerating(false);
-    }
-  };
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message: userText }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error del servidor: ${response.statusText}`);
+        }
+
+        const json = await response.json();
+        if (!json.success || !json.data) {
+          throw new Error(json.message || "La API reporto un error");
+        }
+
+        const finalData: DiagnosticData = json.data;
+
+        setMessagesBySession((prev) => {
+          const sessionMsgs = prev[currentSessionId] || [];
+          return {
+            ...prev,
+            [currentSessionId]: sessionMsgs.map((msg) =>
+              msg.id === assistantMessageId
+                ? {
+                    ...msg,
+                    text: finalData.response,
+                    diagnosticData: finalData,
+                  }
+                : msg
+            ),
+          };
+        });
+
+        triggerTypingEffect(
+          finalData.response,
+          assistantMessageId,
+          currentSessionId,
+          () => {
+            setIsGenerating(false);
+          }
+        );
+      } catch (error) {
+        console.error("Error al obtener diagnostico:", error);
+
+        const errorMsg =
+          "Lo siento, no logre conectarme con la API de diagnostico. Por favor asegurate de que el servidor este activo.";
+
+        setMessagesBySession((prev) => {
+          const sessionMsgs = prev[currentSessionId] || [];
+          return {
+            ...prev,
+            [currentSessionId]: sessionMsgs.map((msg) =>
+              msg.id === assistantMessageId
+                ? {
+                    ...msg,
+                    text: errorMsg,
+                    displayedText: errorMsg,
+                    isFinished: true,
+                    isError: true,
+                  }
+                : msg
+            ),
+          };
+        });
+        setIsGenerating(false);
+      }
+    },
+    [
+      isGenerating,
+      activeMessages,
+      activeSessionId,
+      setSessions,
+      setMessagesBySession,
+      triggerTypingEffect,
+    ]
+  );
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSendMessage(inputValue);
   };
 
-  // Realistic medical quick suggestions
   const suggestions = [
     "Tengo fiebre, tos y congestión nasal",
     "Siento fatiga extrema y dolor de cabeza hace dos días",
@@ -379,7 +271,6 @@ const App = () => {
 
   return (
     <div className="app-layout">
-      {/* Sidebar for chat sessions */}
       <Sidebar
         sessions={sessions}
         activeSessionId={activeSessionId}
@@ -390,9 +281,7 @@ const App = () => {
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
       />
 
-      {/* Main Chat Area */}
       <main className="chat-container">
-        {/* Header bar */}
         <header className="chat-header">
           <div className="header-left">
             <button
@@ -413,11 +302,8 @@ const App = () => {
           </div>
         </header>
 
-        {/* Chat Messages list */}
         <div className="chat-messages">
           {activeMessages.map((message) => {
-            // Ocultar globo vacío del asistente mientras se carga la respuesta
-            // (el indicador de carga ya está visible en ese momento)
             if (
               message.sender === "assistant" &&
               !message.displayedText &&
@@ -448,7 +334,6 @@ const App = () => {
                           )}
                         </div>
 
-                        {/* Diagnostic Panel displayed at the bottom once text is finished */}
                         {message.isFinished && message.diagnosticData && (
                           <DiagnosticPanel
                             symptoms={message.diagnosticData.symptoms}
@@ -465,7 +350,6 @@ const App = () => {
             );
           })}
 
-          {/* Loading Indicator */}
           {isGenerating &&
             activeMessages.length > 0 &&
             activeMessages[activeMessages.length - 1].text === "" && (
@@ -489,7 +373,6 @@ const App = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Suggestion Prompts */}
         {activeMessages.length <= 1 && (
           <div className="suggestions-container">
             <span className="suggestions-title">
@@ -510,7 +393,6 @@ const App = () => {
           </div>
         )}
 
-        {/* Input controls form */}
         <form onSubmit={handleFormSubmit} className="chat-input-form">
           <input
             type="text"
