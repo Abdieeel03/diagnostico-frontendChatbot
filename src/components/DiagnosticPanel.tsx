@@ -1,10 +1,5 @@
 import React, { useState } from "react";
-
-interface Diagnostic {
-  coincidencias: number;
-  enfermedad: string;
-  score: number;
-}
+import type { Diagnostic } from "../types/chat";
 
 interface DiagnosticPanelProps {
   symptoms: string[];
