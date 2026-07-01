@@ -184,7 +184,7 @@ const App = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ message: userText }),
+          body: JSON.stringify({ message: userText, session_id: currentSessionId }),
         });
 
         if (!response.ok) {
