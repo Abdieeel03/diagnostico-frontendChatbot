@@ -36,8 +36,26 @@ interface MessagesMap {
 }
 
 const App = () => {
-  // Typing speed: milliseconds per character. 15ms is Normal speed.
-  const typingSpeedMs = 15;
+  // Typing speed: milliseconds per character.
+  const typingSpeedMs = 25;
+
+  // Dark/Light Mode state
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) return savedTheme === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+
+  // Sync theme class on document element
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDarkMode]);
 
 
 
@@ -60,8 +78,8 @@ const App = () => {
       {
         id: "welcome-msg",
         sender: "assistant",
-        text: "### ¡Bienvenido al Asistente de Diagnóstico Médico! 🩺\n\nPor favor, describe los síntomas que experimentas de forma detallada (por ejemplo: *'Tengo fiebre y tos desde ayer'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
-        displayedText: "### ¡Bienvenido al Asistente de Diagnóstico Médico! 🩺\n\nPor favor, describe los síntomas que experimentas de forma detallada (por ejemplo: *'Tengo fiebre y tos desde ayer'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
+        text: "Bienvenido a Médico AI.\n\nPor favor, describe de forma detallada los síntomas que experimentas (por ejemplo: *'Llevo dos días con fiebre que no baja'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
+        displayedText: "Bienvenido a Médico AI.\n\nPor favor, describe de forma detallada los síntomas que experimentas (por ejemplo: *'Llevo dos días con fiebre que no baja'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
         isFinished: true,
       },
     ],
@@ -212,8 +230,8 @@ const App = () => {
             {
               id: "welcome-msg",
               sender: "assistant",
-              text: "### ¡Bienvenido al Asistente de Diagnóstico Médico! 🩺\n\nPor favor, describe los síntomas que experimentas de forma detallada (por ejemplo: *'Tengo fiebre y tos desde ayer'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
-              displayedText: "### ¡Bienvenido al Asistente de Diagnóstico Médico! 🩺\n\nPor favor, describe los síntomas que experimentas de forma detallada (por ejemplo: *'Tengo fiebre y tos desde ayer'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
+              text: "Bienvenido a Médico AI.\n\nPor favor, describe de forma detallada los síntomas que experimentas (por ejemplo: *'Llevo dos días con fiebre que no baja'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
+              displayedText: "Bienvenido a Médico AI.\n\nPor favor, describe de forma detallada los síntomas que experimentas (por ejemplo: *'Llevo dos días con fiebre que no baja'* o *'Siento dolor de cabeza y fatiga'*).\n\nAnalizaremos tus síntomas para ofrecerte una lista de posibles diagnósticos de simulación y el nivel de coincidencia.\n\n*Nota: Esta es una herramienta educativa de simulación preliminar. Siempre consulta a un profesional de la salud.*",
               isFinished: true,
             },
           ],
@@ -300,10 +318,10 @@ const App = () => {
           [activeSessionId]: sessionMsgs.map((msg) =>
             msg.id === assistantMessageId
               ? {
-                  ...msg,
-                  text: finalData.response,
-                  diagnosticData: finalData,
-                }
+                ...msg,
+                text: finalData.response,
+                diagnosticData: finalData,
+              }
               : msg
           ),
         };
@@ -315,9 +333,9 @@ const App = () => {
 
     } catch (error) {
       console.error("Error al obtener diagnóstico:", error);
-      
-      const errorMsg = "Lo siento, no logré conectarme con la API de diagnóstico de Scala. Por favor asegúrate de que el servidor esté activo en el puerto 9000.";
-      
+
+      const errorMsg = "No pudimos conectar con el servicio de diagnóstico. Verifica tu conexión e inténtalo de nuevo.";
+
       setMessagesBySession((prev) => {
         const sessionMsgs = prev[activeSessionId] || [];
         return {
@@ -325,12 +343,12 @@ const App = () => {
           [activeSessionId]: sessionMsgs.map((msg) =>
             msg.id === assistantMessageId
               ? {
-                  ...msg,
-                  text: errorMsg,
-                  displayedText: errorMsg,
-                  isFinished: true,
-                  isError: true,
-                }
+                ...msg,
+                text: errorMsg,
+                displayedText: errorMsg,
+                isFinished: true,
+                isError: true,
+              }
               : msg
           ),
         };
@@ -348,9 +366,9 @@ const App = () => {
 
   // Realistic medical quick suggestions
   const suggestions = [
-    "Tengo fiebre, tos y congestión nasal",
-    "Siento fatiga extrema y dolor de cabeza hace dos días",
-    "Dolor abdominal fuerte y náuseas",
+    "Llevo dos días con fiebre que no baja",
+    "Siento una fatiga extrema y dolor de cabeza persistente",
+    "Dolor abdominal agudo acompañado de náuseas",
   ];
 
   return (
@@ -381,8 +399,34 @@ const App = () => {
               </svg>
             </button>
             <div className="chat-header-title">
-              <h2>Asistente Diagnóstico</h2>
+              <h2>Médico AI</h2>
             </div>
+          </div>
+
+          <div className="header-right">
+            <button
+              className="theme-toggle-btn"
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              title={isDarkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+            >
+              {isDarkMode ? (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+              )}
+            </button>
           </div>
 
 
@@ -391,27 +435,31 @@ const App = () => {
         {/* Chat Messages list */}
         <div className="chat-messages">
           {activeMessages.map((message) => {
-            // Ocultar globo vacío del asistente mientras se carga la respuesta
-            // (el indicador de carga ya está visible en ese momento)
-            if (message.sender === "assistant" && !message.displayedText && !message.isFinished) {
-              return null;
-            }
             return (
               <div key={message.id} className={`message-row ${message.sender}`}>
                 <div className="message-wrapper">
                   <span className="message-sender-name">
-                    {message.sender === "user" ? "Paciente" : "Asistente Médico"}
+                    {message.sender === "user" ? "Usuario" : "Médico AI"}
                   </span>
-                  
-                  <div className={`message-bubble ${message.isError ? "error-bubble" : ""}`}>
+
+                  <div className={`message-bubble ${message.isError ? "error-bubble" : ""} ${message.sender === "assistant" && !message.displayedText && !message.isFinished ? "loading-bubble" : ""}`}>
                     {message.sender === "assistant" ? (
                       <div className="assistant-content">
-                        <div className="markdown-content">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {message.displayedText || ""}
-                          </ReactMarkdown>
-                          {!message.isFinished && <span className="llm-cursor" />}
-                        </div>
+                        {!message.displayedText && !message.isFinished ? (
+                          <div className="skeleton-loader">
+                            <div className="skeleton-title-bar">Analizando síntomas...</div>
+                            <div className="skeleton-line" style={{ width: "85%" }} />
+                            <div className="skeleton-line" style={{ width: "65%" }} />
+                            <div className="skeleton-line" style={{ width: "75%" }} />
+                          </div>
+                        ) : (
+                          <div className="markdown-content">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {message.displayedText || ""}
+                            </ReactMarkdown>
+                            {!message.isFinished && <span className="llm-cursor" />}
+                          </div>
+                        )}
 
                         {/* Diagnostic Panel displayed at the bottom once text is finished */}
                         {message.isFinished && message.diagnosticData && (
@@ -429,23 +477,6 @@ const App = () => {
               </div>
             );
           })}
-
-          {/* Loading Indicator */}
-          {isGenerating && activeMessages.length > 0 && activeMessages[activeMessages.length - 1].text === "" && (
-            <div className="message-row assistant">
-              <div className="message-wrapper">
-                <span className="message-sender-name">Asistente Médico</span>
-                <div className="message-bubble loading-bubble">
-                  <div className="typing-indicator">
-                    <span className="typing-dot" />
-                    <span className="typing-dot" />
-                    <span className="typing-dot" />
-                  </div>
-                  <span className="loading-text">Analizando síntomas con la API...</span>
-                </div>
-              </div>
-            </div>
-          )}
 
 
 
