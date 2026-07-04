@@ -1,11 +1,6 @@
 import React, { useState } from "react";
 import { formatDiseaseName } from "../utils/format";
-
-interface Diagnostic {
-  coincidencias: number;
-  enfermedad: string;
-  score: number;
-}
+import type { Diagnostic } from "../types/chat";
 
 interface DiagnosticPanelProps {
   symptoms: string[];
