@@ -1,45 +1,95 @@
 :root {
-  /* Medical Theme Palette (White & Aquamarine/Teal) */
-  --bg: #ffffff;
-  --sidebar-bg: #f3faf9;
+  /* Medical Theme Palette (Premium Teal / Slate / Indigo Accent) */
+  --bg: #f8fafc;
+  --chat-bg: #ffffff;
+  --sidebar-bg: #f3faf9; /* Light aquamarine/slate for modern clean look */
   --sidebar-border: #dbebe9;
   --border: #e2e8f0;
   
   --text-main: #334155;      /* slate-700 */
   --text-header: #0f172a;    /* slate-900 */
   --text-muted: #64748b;     /* slate-500 */
+  --text-sidebar: #0f172a;
+  --text-sidebar-muted: #475569;
+  --sidebar-item-hover: rgba(13, 148, 136, 0.05);
+  --sidebar-item-active: rgba(13, 148, 136, 0.1);
   
   /* Medical Specific Colors */
-  --medical-primary: #14b8a6;    /* Teal/Aquamarine */
-  --medical-primary-hover: #0d9488;
-  --medical-primary-light: #e6f7f6;
-  --medical-primary-border: #a7f3d0;
+  --medical-primary: #0d9488;    /* Teal-600 */
+  --medical-primary-hover: #0f766e; /* Teal-700 */
+  --medical-primary-light: #f0fdfa; /* Teal-50 */
+  --medical-primary-border: #99f6e4; /* Teal-200 */
   
   /* Status/Visual Colors */
-  --medical-warning: #f59e0b;    /* Amber */
+  --medical-warning: #d97706;    /* Amber-600 */
   --medical-muted: #94a3b8;      /* Slate Gray */
-  --medical-error: #ef4444;      /* Red */
+  --medical-error: #dc2626;      /* Red-600 */
   --medical-error-light: #fef2f2;
   --medical-error-border: #fca5a5;
   
-  --user-bubble-bg: linear-gradient(135deg, #14b8a6, #0ea5e9);
+  --user-bubble-bg: linear-gradient(135deg, #0d9488, #0f766e);
+  --user-bubble-text: #ffffff;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(13, 148, 136, 0.05), 0 4px 6px -2px rgba(13, 148, 136, 0.02);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(13, 148, 136, 0.04), 0 4px 6px -2px rgba(13, 148, 136, 0.02);
 
+  /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
+  /* Spacing Tokens */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
   box-sizing: border-box;
+}
+
+html.dark {
+  --bg: #090d16;
+  --chat-bg: #0f172a;
+  --sidebar-bg: #090d16;
+  --sidebar-border: #1e293b;
+  --border: #1e293b;
+  
+  --text-main: #cbd5e1;
+  --text-header: #f8fafc;
+  --text-muted: #64748b;
+  --text-sidebar: #f8fafc;
+  --text-sidebar-muted: #94a3b8;
+  --sidebar-item-hover: rgba(255, 255, 255, 0.05);
+  --sidebar-item-active: rgba(255, 255, 255, 0.1);
+  
+  --medical-primary: #2dd4bf;    /* Teal-400 */
+  --medical-primary-hover: #14b8a6; /* Teal-500 */
+  --medical-primary-light: rgba(13, 148, 136, 0.15);
+  --medical-primary-border: #115e59;
+  
+  --medical-warning: #f59e0b;
+  --medical-error: #f87171;
+  --medical-error-light: rgba(239, 68, 68, 0.1);
+  --medical-error-border: #7f1d1d;
+  
+  --user-bubble-bg: linear-gradient(135deg, #0f766e, #0d9488);
+  --user-bubble-text: #ffffff;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
 }
 
 body {
   margin: 0;
   font-family: var(--font-sans);
   color: var(--text-main);
-  background-color: #f8fafc; /* light blue-gray background for page body */
+  background-color: var(--bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {
@@ -66,6 +116,10 @@ body {
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 4px;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
 }
 
 ::-webkit-scrollbar-thumb:hover {

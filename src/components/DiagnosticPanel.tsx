@@ -1,10 +1,6 @@
 import React, { useState } from "react";
-
-interface Diagnostic {
-  coincidencias: number;
-  enfermedad: string;
-  score: number;
-}
+import { formatDiseaseName } from "../utils/format";
+import type { Diagnostic } from "../types/chat";
 
 interface DiagnosticPanelProps {
   symptoms: string[];
@@ -21,13 +17,6 @@ export const DiagnosticPanel: React.FC<DiagnosticPanelProps> = ({
     return null;
   }
 
-  // Format disease name to be more user-friendly (e.g. otitis_media -> Otitis Media)
-  const formatDiseaseName = (name: string): string => {
-    return name
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
 
   // Color logic based on score value
   const getScoreColor = (score: number): string => {
@@ -64,7 +53,7 @@ export const DiagnosticPanel: React.FC<DiagnosticPanelProps> = ({
               <div className="symptoms-list">
                 {symptoms.map((symptom, idx) => (
                   <span key={idx} className="symptom-tag">
-                    🔍 {symptom}
+                    {symptom}
                   </span>
                 ))}
               </div>

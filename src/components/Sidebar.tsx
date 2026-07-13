@@ -44,7 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="sidebar-section-title">Historial de Consultas</div>
         {sessions.length === 0 ? (
           <div className="empty-history">
-            <p>No hay consultas previas</p>
+            <p>Tus consultas aparecerán aquí. Empieza una nueva para recibir tu primer análisis.</p>
           </div>
         ) : (
           <div className="sessions-list">
