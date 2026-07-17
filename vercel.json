@@ -2,6 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" },
-    { "source": "/api/(.*)", "destination": "https://PLACEHOLDER_RENDER_SCALA_URL/api/$1" }
+    { "source": "/api/(.*)", "destination": "https://diagnostico-scalabackendapi.onrender.com/api/$1" }
   ]
 }
